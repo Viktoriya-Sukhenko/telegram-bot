@@ -9,12 +9,28 @@ from aiogram.filters import Command
 from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
 
-# 🔥 Завантаження конфіденційних даних зі змінних середовища
-TOKEN = os.getenv("BOT_TOKEN")  # Telegram Bot Token
-ADMIN_ID = int(os.getenv("ADMIN_ID", 0))  # ID адміністратора (змінна має бути у Railway)
+# 🔥 Отримання змінних середовища
+TOKEN = os.getenv("BOT_TOKEN")
+ADMIN_ID = int(os.getenv("ADMIN_ID", "0"))  # Якщо ADMIN_ID не встановлено, використовується 0
+
+# 🔥 Перевірка змінних перед запуском
+if not TOKEN:
+    raise ValueError("❌ Помилка: змінна середовища BOT_TOKEN не встановлена!")
+
+if ADMIN_ID == 0:
+    print("⚠️ Попередження: ADMIN_ID не встановлено. Бот працюватиме без адміністратора.")
 
 # 🔥 Ініціалізація Firebase через змінну середовища
-FIREBASE_JSON = json.loads(os.getenv("FIREBASE_CREDENTIALS"))
+firebase_credentials_str = os.getenv("FIREBASE_CREDENTIALS")
+
+if not firebase_credentials_str:
+    raise ValueError("❌ Помилка: змінна середовища FIREBASE_CREDENTIALS не встановлена!")
+
+try:
+    FIREBASE_JSON = json.loads(firebase_credentials_str)
+except json.JSONDecodeError:
+    raise ValueError("❌ Помилка: Неправильний формат JSON у FIREBASE_CREDENTIALS!")
+
 cred = credentials.Certificate(FIREBASE_JSON)
 firebase_admin.initialize_app(cred)
 db = firestore.client()
@@ -101,7 +117,7 @@ async def show_site_options(callback_query: types.CallbackQuery):
 # 📌 **Запуск бота**
 async def main():
     print("🔄 Запуск бота...")
-    print("✅ Бот працює! Очікування повідомлень...")
+    print(f"✅ Бот працює! Очікування повідомлень...\n👨‍💻 Адмін ID: {ADMIN_ID}")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
